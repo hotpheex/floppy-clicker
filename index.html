@@ -1,194 +1,203 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Floppy Clicker</title>
 
-    <link rel="stylesheet" href="css/button.css"/>
+    <link rel="stylesheet" href="css/button.css" />
 </head>
+
 <body>
 
-<div id="canvas"></div>
+    <div id="canvas"></div>
 
-<script>
-    var counter = 0;
-    
-    // Set object assets
-    var icon = new Image();
-    icon.src="assets/floppy.png"
+    <script>
+        var score = 0;
 
-    var button = new Image();
-    button.src="assets/test.png"
+        // Set object assets
+        var icon = new Image();
+        icon.src = "assets/floppy.png"
 
-    class Floppy {
-        constructor(x, y) {
-            this.x = x;
-            this.y = y;
-            this.width = 50;
-            this.height = 50;
-            this.velocity = 0;
+        var button = new Image();
+        button.src = "assets/test.png"
+
+        class Floppy {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 50;
+                this.height = 50;
+                this.velocity = 0;
+            }
+
+            draw(ctx) {
+                ctx.save();
+
+                this.velocity += 1;
+                ctx.translate(this.x, this.y += this.velocity);
+                ctx.drawImage(icon, 0, 0, this.width, this.height);
+
+                ctx.restore();
+            }
         }
 
-        draw(ctx) {
-            ctx.save();
+        class Counter {
+            constructor() {
+                this.x = 50;
+                this.y = 50;
+                this.width = 200;
+                this.height = 80;
+            }
 
-            this.velocity += 1;
-            ctx.translate(this.x, this.y += this.velocity);
-            ctx.drawImage(icon,0,0,this.width,this.height);
+            draw(ctx) {
+                ctx.save();
 
-            ctx.restore();
-        }
-    }
+                ctx.font = "30px Arial";
+                ctx.fillStyle = "red";
+                ctx.textAlign = "center";
+                ctx.fillText(score, this.x, this.y);
 
-    class Counter {
-        constructor() {
-            this.x = 50;
-            this.y = 50;
-            this.width = 200;
-            this.height = 80;
-        }
-
-        draw(ctx) {
-            ctx.save();
-
-            ctx.font = "30px Arial";
-            ctx.fillStyle = "red";
-            ctx.textAlign = "center";
-            ctx.fillText(counter, this.x, this.y);
-
-            ctx.restore();
-        }
-    }
-
-    class BigButton {
-        constructor(canvasWidth, canvasHeight) {
-            this.width = 120;
-            this.height = 75;
-            this.x = Math.floor(canvasWidth / 2) - Math.floor(this.width / 2);
-            this.y = canvasHeight - this.height - 40;
-            this.color = "black";
-            this.clipping = 0;
+                ctx.restore();
+            }
         }
 
+        class BigButton {
+            constructor(canvasWidth, canvasHeight) {
+                this.width = 120;
+                this.height = 75;
+                this.x = Math.floor(canvasWidth / 2) - Math.floor(this.width / 2);
+                this.y = canvasHeight - this.height - 40;
+                this.color = "black";
+                this.clipping = 0;
+            }
 
-        draw(ctx) {
-            ctx.save();
 
-            ctx.fillStyle = this.color;
-            ctx.fillRect(this.x, this.y, this.width, this.height);
+            draw(ctx) {
+                ctx.save();
 
-            ctx.restore();
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+
+                ctx.restore();
+            }
+
+            press() {
+                this.color = "green";
+                setTimeout(() => {
+                    this.color = "black"
+                }, 100)
+
+            }
         }
 
-        press() {
-            this.color = "green";
-            setTimeout(() => { this.color = "black" }, 100)
+        function main() {
+            let canvas = document.createElement('canvas');
+            let ctx = canvas.getContext("2d");
 
-        }
-    }
+            canvas.width = 400;
+            canvas.height = 600;
 
-    function main() {
-        let canvas = document.createElement('canvas');
-        let ctx = canvas.getContext("2d");
-
-        canvas.width = 400;
-        canvas.height = 600;
-        
-        let canvasWrapper = document.querySelector('#canvas');
-        canvasWrapper.appendChild(canvas);
+            let canvasWrapper = document.querySelector('#canvas');
+            canvasWrapper.appendChild(canvas);
 
 
-        canvas.addEventListener('click', (e) => {
-                
-            for (let i = 0; i < entities.length; i++) {
-                const entity = entities[i];
+            canvas.addEventListener('click', (e) => {
 
-                if (entity.constructor.name == 'BigButton') {
-                    if (
-                        e.clientX - 8 > entity.x &&
-                        e.clientX - 8 < entity.x + entity.width &&
-                        e.clientY - 8 > entity.y &&
-                        e.clientY - 8 < entity.y + entity.height
-                    ) {
-                        let floppy = new Floppy(Math.random() * canvas.width, Math.random() * 50);
-                        entities.push(floppy);
-                        counter ++;
-                        saveGame()
+                for (let i = 0; i < entities.length; i++) {
+                    const entity = entities[i];
 
-                        // Button click animation
-                        entity.press(ctx);
+                    if (entity.constructor.name == 'BigButton') {
+                        if (
+                            e.clientX - 8 > entity.x &&
+                            e.clientX - 8 < entity.x + entity.width &&
+                            e.clientY - 8 > entity.y &&
+                            e.clientY - 8 < entity.y + entity.height
+                        ) {
+                            let floppy = new Floppy(Math.random() * canvas.width, Math.random() * 50);
+                            entities.push(floppy);
+                            score++;
+                            saveGame()
+
+                            // Button click animation
+                            entity.press(ctx);
+                        }
+                    }
+                }
+            })
+
+
+            let entities = [];
+
+            let bigButton = new BigButton(canvas.width, canvas.height);
+            entities.push(bigButton);
+
+            loadGame();
+
+
+            let floppyCounter = new Counter();
+            entities.push(floppyCounter);
+
+            requestAnimationFrame(onProcess);
+
+            function onProcess() {
+                draw();
+                checkRemove();
+                requestAnimationFrame(onProcess);
+            }
+
+            function checkRemove() {
+                for (let i = 0; i < entities.length; i++) {
+                    let entity = entities[i];
+
+                    if (entity.y >= canvas.height) {
+                        entities.splice(i--, 1)
                     }
                 }
             }
-        })
 
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        let entities = [];
+                // Draw canvas background
+                ctx.beginPath();
+                ctx.fillStyle = "grey";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        let bigButton = new BigButton(canvas.width, canvas.height);
-        entities.push(bigButton);
-
-        loadGame();
-
-
-        let floppyCounter = new Counter();
-        entities.push(floppyCounter);
-
-        requestAnimationFrame(onProcess);
-
-        function onProcess() {
-            draw();
-            checkRemove();
-            requestAnimationFrame(onProcess);
-        }
-
-        function checkRemove() {
-            for (let i = 0; i < entities.length; i++) {
-                let entity = entities[i];
-
-                if (entity.y >= canvas.height) {
-                    entities.splice(i--, 1)
+                for (let i = 0; i < entities.length; i++) {
+                    let entity = entities[i];
+                    entity.draw(ctx);
                 }
+
+            }
+
+            function saveGame() {
+                window.localStorage.setItem(
+                    'score',
+                    JSON.stringify(
+                        score
+                    )
+                );
+
+                console.log(window.localStorage)
+            }
+
+            function loadGame() {
+                saveData = window.localStorage.getItem('score');
+                if (saveData) {
+
+                    score = JSON.parse(saveData);
+                    console.log(saveData);
+
+                }
+
             }
         }
 
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Draw canvas background
-            ctx.beginPath();
-            ctx.fillStyle = "grey";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            for (let i = 0; i < entities.length; i++) {
-                let entity = entities[i];
-                entity.draw(ctx);
-            }
-
-        }
-
-        function saveGame() {
-            window.localStorage.setItem(
-                'floppyCount', 
-                JSON.stringify(
-                    {floppies: counter}
-                )
-            );
-
-            console.log(window.localStorage)
-        }
-
-        function loadGame() {
-            saveData = window.localStorage.getItem('floppyCount');
-            counter = JSON.parse(saveData).floppies;
-            console.log(counter)
-        }
-    }
-
-    main();
-    
-</script>
+        main();
+    </script>
 
 </body>
+
 </html>

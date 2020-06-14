@@ -3,9 +3,10 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no9">
     <title>Floppy Clicker</title>
 
+    <link rel="stylesheet" href="css/master.css" />
     <link rel="stylesheet" href="css/button.css" />
 </head>
 
@@ -14,14 +15,15 @@
     <div id="canvas"></div>
 
     <script>
+        // Score variable
         var score = 0;
 
         // Set object assets
         var icon = new Image();
-        icon.src = "assets/floppy.png"
+        icon.src = "assets/floppy.png";
 
         var button = new Image();
-        button.src = "assets/test.png"
+        button.src = "assets/test.png";
 
         class Floppy {
             constructor(x, y) {
@@ -96,8 +98,8 @@
             let canvas = document.createElement('canvas');
             let ctx = canvas.getContext("2d");
 
-            canvas.width = 400;
-            canvas.height = 600;
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
 
             let canvasWrapper = document.querySelector('#canvas');
             canvasWrapper.appendChild(canvas);
@@ -142,11 +144,18 @@
             requestAnimationFrame(onProcess);
 
             function onProcess() {
+
+                // Physics step goes here.
+
                 draw();
+
                 checkRemove();
+
                 requestAnimationFrame(onProcess);
+
             }
 
+            // Check removal of entity in entities array
             function checkRemove() {
                 for (let i = 0; i < entities.length; i++) {
                     let entity = entities[i];
@@ -172,19 +181,21 @@
 
             }
 
+            // Save data score to score. it's easier to keep naming consistent so you need less operations later
             function saveGame() {
                 window.localStorage.setItem(
                     'score',
-                    JSON.stringify(
-                        score
-                    )
+                    JSON.stringify(score)
                 );
 
-                console.log(window.localStorage)
+                console.log(window.localStorage);
             }
 
             function loadGame() {
+
                 saveData = window.localStorage.getItem('score');
+
+                //  Check if it actually exists otherwise you'll get an error or null value
                 if (saveData) {
 
                     score = JSON.parse(saveData);

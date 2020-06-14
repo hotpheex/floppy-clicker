@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no9">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Floppy Clicker</title>
 
     <link rel="stylesheet" href="css/master.css" />
@@ -92,6 +92,7 @@
                 }, 100)
 
             }
+
         }
 
         function main() {
@@ -117,13 +118,7 @@
                             e.clientY - 8 > entity.y &&
                             e.clientY - 8 < entity.y + entity.height
                         ) {
-                            let floppy = new Floppy(Math.random() * canvas.width, Math.random() * 50);
-                            entities.push(floppy);
-                            score++;
-                            saveGame()
-
-                            // Button click animation
-                            entity.press(ctx);
+                            addFloppy(entity);
                         }
                     }
                 }
@@ -135,6 +130,8 @@
             let bigButton = new BigButton(canvas.width, canvas.height);
             entities.push(bigButton);
 
+            // Load previous score from persistent storage
+            var db = window.openDatabase('saveData', '1.0', 'Floppy Clicker Save Data', 64);
             loadGame();
 
 
@@ -153,6 +150,17 @@
 
                 requestAnimationFrame(onProcess);
 
+            }
+
+            // Function triggered on click of BigButton
+            function addFloppy(entity) {
+                let floppy = new Floppy(Math.random() * canvas.width, Math.random() * 50);
+                entities.push(floppy);
+                score++;
+                saveGame();
+
+                // Button click animation
+                entity.press(ctx);
             }
 
             // Check removal of entity in entities array
@@ -183,25 +191,59 @@
 
             // Save data score to score. it's easier to keep naming consistent so you need less operations later
             function saveGame() {
-                window.localStorage.setItem(
-                    'score',
-                    JSON.stringify(score)
-                );
+                db.transaction(function (tx) { 
+                    tx.executeSql('UPDATE Data SET value=? WHERE name="score"', [score], null, null,
+                        function(transaction, error) {
+                            console.log('WebSQL Error: ' + error.message);
+                        }
+                    );
 
-                console.log(window.localStorage);
+                }); 
+
+                // window.localStorage.setItem(
+                //     'score',
+                //     JSON.stringify(score)
+                // );
+
+                // console.log(window.localStorage);
             }
 
             function loadGame() {
+                db.transaction(function (tx) {
+                    // Create "Data" table if it doesn't already exist
+                    tx.executeSql('CREATE TABLE IF NOT EXISTS Data (name, value)', null, null,
+                        function(transaction, error) { console.log('WebSQL Error: ' + error.message); }
+                    );
 
-                saveData = window.localStorage.getItem('score');
+                    // Create unique constraint on "name" column to avoid duplicate rows
+                    tx.executeSql('CREATE UNIQUE INDEX Name on Data (name)', null, null,
+                        function(transaction, error) { console.log('WebSQL Error: ' + error.message); }
+                    );
 
-                //  Check if it actually exists otherwise you'll get an error or null value
-                if (saveData) {
+                    // Insert "score" row if it doesn't already exist
+                    tx.executeSql('INSERT INTO Data (name, value) VALUES ("score", ?)', [score], null, null,
+                        function(transaction, error) { console.log('WebSQL Error: ' + error.message); }
+                    );
+                });
 
-                    score = JSON.parse(saveData);
-                    console.log(saveData);
+                db.transaction(function (tx) {
+                    // Read value of row "score" into "score" global var
+                    tx.executeSql('SELECT * FROM Data WHERE name="score"', [], 
+                        function (transaction, results) { score = results.rows.item(0).value },
+                        function(transaction, error) { console.log('WebSQL Error: ' + error.message); }
+                    );
+                });
 
-                }
+
+                // saveData = window.localStorage.getItem('score');
+
+                // //  Check if it actually exists otherwise you'll get an error or null value
+                // if (saveData) {
+
+                //     score = JSON.parse(saveData);
+                //     console.log(saveData);
+
+                // }
 
             }
         }
